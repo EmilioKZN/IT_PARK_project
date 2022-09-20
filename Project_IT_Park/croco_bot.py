@@ -17,39 +17,49 @@ def send_word(message):
     if(message.text == "Легкий"):
         keyboard = telebot.types.ReplyKeyboardMarkup()
         btn1 = telebot.types.KeyboardButton("Угадал")
-        btn2 = telebot.types.KeyboardButton("Неугадал")
-        keyboard.add(btn1, btn2)
+        btn2 = telebot.types.KeyboardButton("Не угадал")
+        btn3 = telebot.types.KeyboardButton("Стоп")
+        keyboard.add(btn1, btn2, btn3)
         bot.send_message(message.chat.id, get_ez(), reply_markup=keyboard)
     if (message.text == "Угадал"):
-            bot.send_message(message.chat.id, get_ez())
-    if (message.text == "Неугадал"):
-            bot.send_message(message.chat.id, get_ez())
-#
-#
-# @bot.message_handler(content_types=['text'])
-# def send_word1(message):
+        bot.send_message(message.chat.id, get_ez())
+    if (message.text == "Не угадал"):
+        bot.send_message(message.chat.id, get_ez())
+
     if(message.text == "Средний"):
         keyboard = telebot.types.ReplyKeyboardMarkup()
         btn1 = telebot.types.KeyboardButton("Угадaл")
-        btn2 = telebot.types.KeyboardButton("Неугадaл")
-        keyboard.add(btn1, btn2)
+        btn2 = telebot.types.KeyboardButton("Не угадaл")
+        btn3 = telebot.types.KeyboardButton("Стоп")
+        keyboard.add(btn1, btn2, btn3)
         bot.send_message(message.chat.id, get_norm(), reply_markup=keyboard)
     elif (message.text == "Угадaл"):
         bot.send_message(message.chat.id, get_norm())
-    elif (message.text == "Неугадaл"):
+    elif (message.text == "Не угадaл"):
         bot.send_message(message.chat.id, get_norm())
 
-# @bot.message_handler(content_types=['text'])
-# def send_word2(message):
+
     if(message.text == "Сложный"):
         keyboard = telebot.types.ReplyKeyboardMarkup()
         btn1 = telebot.types.KeyboardButton("Угaдал")
-        btn2 = telebot.types.KeyboardButton("Неyгадал")
-        keyboard.add(btn1, btn2)
+        btn2 = telebot.types.KeyboardButton("Не yгадал")
+        btn3 = telebot.types.KeyboardButton("Стоп")
+        keyboard.add(btn1, btn2, btn3)
         bot.send_message(message.chat.id, get_diff(), reply_markup=keyboard)
     elif (message.text == "Угaдал"):
         bot.send_message(message.chat.id, get_diff())
-    elif (message.text == "Неyгадал"):
+    elif (message.text == "Не yгадал"):
         bot.send_message(message.chat.id, get_diff())
+
+    if (message.text == "Стоп"):
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = telebot.types.KeyboardButton('Легкий')
+        btn2 = telebot.types.KeyboardButton('Средний')
+        btn3 = telebot.types.KeyboardButton('Сложный')
+        keyboard.add(btn1, btn2, btn3)
+        bot.send_message(message.chat.id, "Выбери сложность", reply_markup=keyboard)
+
+def stop():
+    send_word(get_stop())
 
 bot.polling(none_stop = True)

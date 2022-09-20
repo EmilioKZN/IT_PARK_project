@@ -26,13 +26,6 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/l.mukhamerdieva/Documents/GitHub/IT_PARK_project/Project_IT_Park"
-  }
-}]]></component>
   <component name="RunManager" selected="Python.get_words">
     <configuration name="get_words" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Project_IT_Park" />
