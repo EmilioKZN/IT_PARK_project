@@ -3,35 +3,53 @@ import sqlite3
 import random
 token = '5506637372:AAHtzF25c1ZH0xBahElcTjvtECbX--fVFPI'
 bot = telebot.TeleBot(token)
-base_for_bot = sqlite3.connect('countries.db')
-cur = base_for_bot.cursor()
 
 class data_base():
 
-    def get_randon_str(self):
-        """Выдаем рандомную строчку из таблицы с правильным ответом и флагом"""
-        cur.execute("SELECT * FROM 'countries and capitals' ORDER BY RANDOM() LIMIT 1;")
-        one_result = cur.fetchone()
-        return one_result
+    def __init__(self):
+        self.connection = sqlite3.connect('countries.db', check_same_thread=False)
+        self.cur = self.connection.cursor()
 
-    def get_countries_value(self):
-        """Формируем варинты ответов"""
-        random_list = [self.get_randon_str()[1]]
-        for i in range(3):
-            random_list.append(self.get_randon_str()[1])
-        return random_list
+    def get_all_base(self):
+        """Получаем все строки из базы"""
+        with self.connection:
+            return self.cur.execute("SELECT * FROM 'countries and capitals'").fetchall()
 
-    def get_flag(self):
-        """Выдаем ссылку на изображение флага"""
-        country_flag = self.get_randon_str()[3]
-        return str(country_flag)
+    def one_str(self, rownum):
+        """Получаем одну строку по id"""
+        with self.connection:
+            return self.cur.execute("SELECT * FROM 'countries and capitals' WHERE id = ?", (rownum, )).fetchall()[0]
+
+    def count_rows(self):
+        """Считаем количество строк"""
+        with self.connection:
+            res = self.cur.execute("SELECT * FROM 'countries and capitals'").fetchall()
+            return len(res)
+
+    def close_base(self):
+        self.connection.close()
 
 
 
-bas = data_base().get_flag()
-#print(bas.get_countries_value())
-#print(bas.get_randon_str())
-#print(bas.get_flag())
+def random_capitals(): # Формирование неверных вариантов ответа
+    one = data_base()
+    rand_num = random.randint(1, one.count_rows())
+    l2 = list()
+    for i in range(3):
+        rand_num = random.randint(1, one.count_rows())
+        l1 = one.one_str(rand_num)
+        l2.append(l1[1])
+    return l2
+
+def answers_and_right_str(): # Обощение данных
+    one = data_base()
+    right_answer_list = one.one_str(random.randint(1, one.count_rows()))
+    right_capital = right_answer_list[1]
+    answers = [right_capital] + random_capitals()
+    random.shuffle(answers)
+    return right_answer_list, answers, right_capital
+
+# print(answers_and_right_str())
 
 
 @bot.message_handler(commands=['start'])
@@ -40,20 +58,41 @@ def start_message(message):
     btn1 = telebot.types.KeyboardButton('Старт игры')
     keyboard.add(btn1)
     bot.send_message(message.chat.id, "Попроуй угадать страну по флагу", reply_markup=keyboard)
-    bot.send_photo(message.chat.id, photo=bas, reply_markup=keyboard)
+
+@bot.message_handler(content_types=['text'])
+def get_photo(message):
+    answers = answers_and_right_str()
+    if message.text == 'Старт игры':
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = telebot.types.KeyboardButton(answers[1][0])
+        btn2 = telebot.types.KeyboardButton(answers[1][1])
+        btn3 = telebot.types.KeyboardButton(answers[1][2])
+        btn4 = telebot.types.KeyboardButton(answers[1][3])
+        keyboard.add(btn1, btn2, btn3, btn4)
+        bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
+
+    elif message.text == answers[2]:
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = telebot.types.KeyboardButton(answers[1][0])
+        btn2 = telebot.types.KeyboardButton(answers[1][1])
+        btn3 = telebot.types.KeyboardButton(answers[1][2])
+        btn4 = telebot.types.KeyboardButton(answers[1][3])
+        keyboard.add(btn1, btn2, btn3, btn4)
+        bot.send_message(message.chat.id, "Правильно!")
+        bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
+
+    else:
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = telebot.types.KeyboardButton(answers[1][0])
+        btn2 = telebot.types.KeyboardButton(answers[1][1])
+        btn3 = telebot.types.KeyboardButton(answers[1][2])
+        btn4 = telebot.types.KeyboardButton(answers[1][3])
+        keyboard.add(btn1, btn2, btn3, btn4)
+        bot.send_message(message.chat.id, "Не угадал (")
+        bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
+
 
 bot.polling(none_stop = True)
-# @bot.message_handler(content_types=['photo'])
-# def send_flag(message):
-#     if(message.text == 'Старт игры'):
-#         base = data_base()
-#         # keyboard = telebot.types.ReplyKeyboardMarkup()
-#         # btn1 = telebot.types.KeyboardButton(base.get_countries_value()[0])
-#         # btn2 = telebot.types.KeyboardButton(base.get_countries_value()[1])
-#         # btn3 = telebot.types.KeyboardButton(base.get_countries_value()[2])
-#         # btn4 = telebot.types.KeyboardButton(base.get_countries_value()[3])
-#         # keyboard.add(btn1, btn2, btn3, btn4)
-#         photo = base.get_flag()
-#         bot.send_photo(message.chat.id, photo=base.get_flag(), reply_markup=keyboard)
+
 
 
