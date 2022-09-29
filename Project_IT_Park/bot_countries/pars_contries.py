@@ -19,6 +19,4 @@ def pull_base():
 
 
 pull_base()
-# a = tuple(list_counrties[8].text.strip().split(" "))
-# print(a)
 
