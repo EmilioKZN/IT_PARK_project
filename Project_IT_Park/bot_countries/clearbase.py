@@ -1,5 +1,6 @@
 import sqlite3
 from botik import answers_and_right_str
+
 def write_base():
     base = sqlite3.connect('dinamicdb.db', check_same_thread=False)
     cur = base.cursor()
@@ -9,11 +10,19 @@ def write_base():
 
 #write_base()
 
-def del_get_str():
+def get_str():
+    base = sqlite3.connect('dinamicdb.db', check_same_thread=False)
+    cur = base.cursor()
+    return cur.execute("SELECT * FROM 'Dinamicbd'").fetchone()
+
+# print(get_str())
+
+def clear_base():
     base = sqlite3.connect('dinamicdb.db', check_same_thread=False)
     cur = base.cursor()
     cur.execute("""DELETE FROM 'Dinamicbd'""")
     base.commit()
     cur.close()
 
-#del_get_str()
+#clear_base()
+

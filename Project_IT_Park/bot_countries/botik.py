@@ -1,10 +1,11 @@
 import telebot
 import sqlite3
 import random
-from enum import Enum
+import datetime
 token = '5506637372:AAHtzF25c1ZH0xBahElcTjvtECbX--fVFPI'
 bot = telebot.TeleBot(token)
-count = 0 # Счетчик очков
+count_answers = 1 # Счетчик флагов
+count_right_answers = 0 # Счетчик отчков
 
 class DataBase():
 
@@ -73,12 +74,11 @@ def clear_base(): # Очищаем БД
     base.commit()
     cur.close()
 
-# class RightAnswer(Enum):
-#     rightanswer = answers_and_right_str()[2]
-
-
 @bot.message_handler(commands=['start'])
 def start_message(message):
+    date_now = datetime.datetime.now()
+    statistic_list = [str(message.from_user.first_name), str(date_now)]
+    write_statistic_base(tuple(statistic_list))
     clear_base()
     answers = answers_and_right_str()
     write_base(answers)
@@ -88,46 +88,115 @@ def start_message(message):
     btn3 = telebot.types.KeyboardButton(answers[1][2])
     btn4 = telebot.types.KeyboardButton(answers[1][3])
     keyboard.add(btn1, btn2, btn3, btn4)
-    bot.send_message(message.chat.id, "Привет! " + message.from_user.first_name + " Попроуй угадать страну по флагу")
+    bot.send_message(message.chat.id, "Привет, " + message.from_user.first_name + "!" + "\n" +
+                     "Попробуй угадать страну по флагу." + "\n" + "Вопросов осталось: " + str(11 - count_answers))
     bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
 
+def write_statistic_base(info):
+    base = sqlite3.connect('staticticDB.db', check_same_thread=False)
+    cur = base.cursor()
+    try:
+        cur.execute("""INSERT INTO 'statistic'(name, date) VALUES (?, ?);""", info)
+        base.commit()
+        base.close()
+    except sqlite3.OperationalError:
+        base.close()
 
 @bot.message_handler(commands=['stop'])
 def stop_message(message):
-    bot.send_message(message.chat.id, "Игра окончена Ваш счет: " + str(count))
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = telebot.types.KeyboardButton('/start')
+    keyboard.add(btn1)
+    bot.send_message(message.chat.id, "Для начала игры нажмите кнопку '/start'", reply_markup=keyboard)
+
+@bot.message_handler(commands=['statistic'])
+def stop_message(message):
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = telebot.types.KeyboardButton('/statistic')
+    keyboard.add(btn1)
+    name = message.from_user.first_name
+
+    def get_statistic(): # Запись пользователей в БД
+        base = sqlite3.connect('staticticDB.db', check_same_thread=False)
+        cur = base.cursor()
+        line = """SELECT name, points, date FROM 'statistic' WHERE name = ?;"""
+        str1 = cur.execute(line, (name, )).fetchall()[-1]
+        firstname = str1[0]
+        point = str1[1]
+        date = str1[2]
+        str2 = (f"Послдний результат: \nИмя: {firstname}. \nОчков: {point}. \nДата: {date}.")
+        return str2
+    bot.send_message(message.chat.id, get_statistic(), reply_markup=keyboard)
+
 
 
 @bot.message_handler(content_types=['text'])
-def get_photo(message):
+def get_game(message):
     right_answer = get_str()[0]
+    right_answer_capital = get_str()[1]
     answers = answers_and_right_str()
-    if message.text == right_answer:
-        clear_base()
-        write_base(answers)
-        count += 1
+    name = message.from_user.first_name
+    global count_answers
+    global count_right_answers
+    if count_answers <= 10:
+        if message.text == right_answer:
+            clear_base()
+            write_base(answers)
+            count_answers += 1
+            count_right_answers += 1
+            keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn1 = telebot.types.KeyboardButton(answers[1][0])
+            btn2 = telebot.types.KeyboardButton(answers[1][1])
+            btn3 = telebot.types.KeyboardButton(answers[1][2])
+            btn4 = telebot.types.KeyboardButton(answers[1][3])
+            keyboard.add(btn1, btn2, btn3, btn4)
+            bot.send_message(message.chat.id, "Правильно! Ваш счет: " + str(count_right_answers) + "." + "\n" +
+                             "Вопросов осталось - " + str(11 - count_answers))
+            bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
+        else:
+            count_answers += 1
+            clear_base()
+            write_base(answers)
+            keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+            btn1 = telebot.types.KeyboardButton(answers[1][0])
+            btn2 = telebot.types.KeyboardButton(answers[1][1])
+            btn3 = telebot.types.KeyboardButton(answers[1][2])
+            btn4 = telebot.types.KeyboardButton(answers[1][3])
+            keyboard.add(btn1, btn2, btn3, btn4)
+            bot.send_message(message.chat.id, "Не угадал (" + "\n" + "Правильный ответ: " + str(right_answer) + "." +
+                 "\n" + "Ваш счет: " + str(count_right_answers) + "." + "\n" + "Вопросов осталось - " + str(11 - count_answers))
+            bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
+    elif count_answers > 10:
+        name = message.from_user.first_name
+        liders_list = [str(message.from_user.first_name), int(count_right_answers), str(get_time(name))]
+        write_to_rating(tuple(liders_list))
         keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = telebot.types.KeyboardButton(answers[1][0])
-        btn2 = telebot.types.KeyboardButton(answers[1][1])
-        btn3 = telebot.types.KeyboardButton(answers[1][2])
-        btn4 = telebot.types.KeyboardButton(answers[1][3])
-        keyboard.add(btn1, btn2, btn3, btn4)
-        bot.send_message(message.chat.id, "Правильно!" + str(count))
-        bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
-
-    else:
-        clear_base()
-        write_base(answers)
-        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = telebot.types.KeyboardButton(answers[1][0])
-        btn2 = telebot.types.KeyboardButton(answers[1][1])
-        btn3 = telebot.types.KeyboardButton(answers[1][2])
-        btn4 = telebot.types.KeyboardButton(answers[1][3])
-        keyboard.add(btn1, btn2, btn3, btn4)
-        bot.send_message(message.chat.id, "Не угадал ( " + str(right_answer))
-        bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
+        btn1 = telebot.types.KeyboardButton('/start')
+        keyboard.add(btn1)
+        bot.send_message(message.chat.id, "Игра окончена!" + "\n" + "Ваш счет: " + str(count_right_answers) + "." + "\n" +
+        str(get_time(name)) + "." + "\n" + "Для начала новой игры нажмите /start.", reply_markup=keyboard)
 
 
+def get_time(name):
+    base = sqlite3.connect('staticticDB.db', check_same_thread=False)
+    cur = base.cursor()
+    date_str = cur.execute("""SELECT date FROM 'statistic' WHERE name = ?;""", (name, )).fetchall()[-1][0]
+    date_format = "%Y-%m-%d %H:%M:%S.%f"
+    date_datetime = datetime.datetime.strptime(date_str, date_format)
+    time_now = datetime.datetime.now()
+    deltatime = str(time_now - date_datetime)
+    list_time = deltatime.split(':')
+    hour = list_time[0]
+    minute = list_time[1]
+    sec = list_time[2]
+    return (f"Вы справились за: \nЧасов: {hour}. \nМинут: {minute}. \nСекунд {sec}.")
 
-bot.polling(none_stop = True)
+def write_to_rating(info):
+    base = sqlite3.connect('ratingBD.db', check_same_thread=False)
+    cur = base.cursor()
+    cur.execute("""INSERT INTO 'rating'(name, points, time) VALUES (?, ?, ?);""", info)
+    base.commit()
+
+bot.polling(none_stop=True)
 
 
