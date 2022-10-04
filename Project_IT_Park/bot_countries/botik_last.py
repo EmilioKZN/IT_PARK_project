@@ -98,7 +98,7 @@ def statistic_message(message):
         max1 = get_your_best_points(name1)
         base = sqlite3.connect('ratingBD.db', check_same_thread=False)
         cur = base.cursor()
-        player_str = cur.execute("""SELECT * FROM 'rating' WHERE points = ?;""", (max1,)).fetchall()
+        player_str = cur.execute("""SELECT * FROM 'rating'  WHERE name = ?;""", (name1, )).fetchall()
         max2 = min(player_str)
         name2 = max2[0]
         point = max2[1]
