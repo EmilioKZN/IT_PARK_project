@@ -76,34 +76,6 @@ def clear_base(): # Очищаем БД
     base.commit()
     cur.close()
 
-@bot.message_handler(commands=['start'])
-def start_message(message):
-    date_now = datetime.datetime.now()
-    statistic_list = [str(message.from_user.first_name), str(date_now)]
-    write_statistic_base(tuple(statistic_list))
-    clear_base()
-    answers = answers_and_right_str()
-    write_base(answers)
-    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn1 = telebot.types.KeyboardButton(answers[1][0])
-    btn2 = telebot.types.KeyboardButton(answers[1][1])
-    btn3 = telebot.types.KeyboardButton(answers[1][2])
-    btn4 = telebot.types.KeyboardButton(answers[1][3])
-    keyboard.add(btn1, btn2, btn3, btn4)
-    bot.send_message(message.chat.id, "Привет, " + message.from_user.first_name + "!" + "\n" +
-                     "Попробуй угадать страну по флагу." + "\n" + "Вопросов осталось: " + str(11 - count_answers))
-    bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
-
-def write_statistic_base(info):
-    base = sqlite3.connect('staticticDB.db', check_same_thread=False)
-    cur = base.cursor()
-    try:
-        cur.execute("""INSERT INTO 'statistic'(name, date) VALUES (?, ?);""", info)
-        base.commit()
-        base.close()
-    except sqlite3.OperationalError:
-        base.close()
-
 @bot.message_handler(commands=['stop'])
 def stop_message(message):
     keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -157,6 +129,33 @@ def best_message(message):
 
     bot.send_message(message.chat.id, best_player())
 
+@bot.message_handler(commands=['start'])
+def start_message(message):
+    date_now = datetime.datetime.now()
+    statistic_list = [str(message.from_user.first_name), str(date_now)]
+    write_statistic_base(tuple(statistic_list))
+    clear_base()
+    answers = answers_and_right_str()
+    write_base(answers)
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = telebot.types.KeyboardButton(answers[1][0])
+    btn2 = telebot.types.KeyboardButton(answers[1][1])
+    btn3 = telebot.types.KeyboardButton(answers[1][2])
+    btn4 = telebot.types.KeyboardButton(answers[1][3])
+    keyboard.add(btn1, btn2, btn3, btn4)
+    bot.send_message(message.chat.id, "Привет, " + message.from_user.first_name + "!" + "\n" +
+                     "Попробуй угадать страну по флагу." + "\n" + "Вопросов осталось: " + str(11 - count_answers))
+    bot.send_photo(message.chat.id, photo=answers[0][3], reply_markup=keyboard)
+
+def write_statistic_base(info):
+    base = sqlite3.connect('staticticDB.db', check_same_thread=False)
+    cur = base.cursor()
+    try:
+        cur.execute("""INSERT INTO 'statistic'(name, date) VALUES (?, ?);""", info)
+        base.commit()
+        base.close()
+    except sqlite3.OperationalError:
+        base.close()
 
 @bot.message_handler(content_types=['text'])
 def get_game(message):
@@ -208,7 +207,7 @@ def get_game(message):
         keyboard.add(btn1)
         bot.send_message(message.chat.id, "Игра окончена!" + "\n" + "Ваш счет: " + str(count_right_answers) + "." + "\n" +
         str(get_time(name)) + "." + "\n" + "Для начала новой игры нажмите /start.", reply_markup=keyboard)
-
+        count_answers = 0
 
 def get_time(name):
     base = sqlite3.connect('staticticDB.db', check_same_thread=False)
@@ -234,8 +233,6 @@ def get_time_datatime_format(name):
     deltatime = str(time_now - date_datetime)
     return deltatime
 
-
-
 def write_to_rating(info):
     base = sqlite3.connect('ratingBD.db', check_same_thread=False)
     cur = base.cursor()
@@ -243,5 +240,4 @@ def write_to_rating(info):
     base.commit()
 
 bot.polling(none_stop=True)
-
 
