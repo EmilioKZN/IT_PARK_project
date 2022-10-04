@@ -90,8 +90,11 @@ def statistic_message(message):
         base = sqlite3.connect('ratingBD.db', check_same_thread=False)
         cur = base.cursor()
         date_str = cur.execute("""SELECT * FROM 'rating' WHERE name = ?;""", (name,)).fetchall()
-        max_point = max(date_str)[1]
-        return max_point
+        max_point = max(date_str)
+        name2 = max_point[0]
+        point = max_point[1]
+        time = max_point[2]
+        return (f"Твой лучший результат: {name2} \nКоличество очков: {point} \nСправился за: {time}")
 
     def your_best_game():
         name1 = name
@@ -104,7 +107,7 @@ def statistic_message(message):
         point = max2[1]
         time = max2[2]
         return (f"Твой лучший результат: {name2} \nКоличество очков: {point} \nСправился за: {time}")
-    bot.send_message(message.chat.id, your_best_game())
+    bot.send_message(message.chat.id, get_your_best_points(name))
 
 @bot.message_handler(commands=['best'])
 def best_message(message):
